@@ -35,18 +35,6 @@ extension Eumorphic {
     }
 }
 
-public struct AnyEumorphic: Eumorphic {
-    
-    public static var empty: AnyEumorphic = .null
-    public static var null: AnyEumorphic = .init(nil)
-
-    var wrapped: Any
-    
-    public init(_ wrapped: Any? = nil) { self.wrapped = wrapped as Any }
-    public func get(_ path: Path) throws -> Any? { try _get(path, from: wrapped) }
-    public mutating func set(_ value: Any, at path: Path) throws { try _set(value, at: path, on: wrapped) }
-}
-
 extension Dictionary: Eumorphic where Key == String, Value == Any {
     
     public func get(_ path: Path) throws -> Value? {
@@ -114,7 +102,7 @@ func get<T>(_ path: Path, from any: Any, as _: T.Type = T.self) throws -> T? {
     return try (any as? T).or(throw: "\(type(of: any)) is not \(T.self)".error())
 }
 
-private func _get(_ path: Path, from any: Any) throws -> Any? {
+func _get(_ path: Path, from any: Any) throws -> Any? {
     switch any {
     case let array as [Any]: return try array.get(path)
     case let dictionary as [String: Any]: return try dictionary.get(path)
@@ -134,7 +122,7 @@ func set<T>(_ value: T, at path: Path, on any: Any?) throws -> Any? {
 }
 
 @discardableResult
-private func _set(_ value: Any, at path: Path, on any: Any?) throws -> Any? {
+func _set(_ value: Any, at path: Path, on any: Any?) throws -> Any? {
     guard let (crumb, _) = path.first else { return value }
     switch crumb {
     case .int:

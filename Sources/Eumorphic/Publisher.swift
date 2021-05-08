@@ -10,10 +10,10 @@
 import Combine
 
 @available(macOS 10.15, iOS 13, *)
-extension Publisher {
+extension Publisher where Output: Eumorphic {
         
-    public subscript<T>(at path: Path.Crumb..., as type: T.Type = T.self) -> AnyPublisher<T, Failure> where T: Equatable {
-        self[at: Path(path), as: T.self]
+    public subscript<T>(at crumbs: Path.Crumb..., as type: T.Type = T.self) -> AnyPublisher<T, Failure> where T: Equatable {
+        self[at: Path(crumbs), as: T.self]
     }
     
     public subscript<T>(at path: Path, as type: T.Type = T.self) -> AnyPublisher<T, Failure> where T: Equatable {
@@ -22,20 +22,26 @@ extension Publisher {
 }
 
 @available(macOS 10.15, iOS 13, *)
-extension Publisher {
+extension Publisher where Output == AnyEumorphic {
     
-    public subscript(at path: Path.Crumb...) -> Publishers.CompactMap<Self, Any> {
-        self[at: Path(path)]
+    public subscript(at crumbs: Path.Crumb...) -> Publishers.CompactMap<Self, Any> {
+        self[at: Path(crumbs)]
     }
     
     public subscript(at path: Path) -> Publishers.CompactMap<Self, Any> {
-        compactMap{
-            switch $0 {
-            case let array as [Any]: return array[at: path]
-            case let dictionary as [String: Any]: return dictionary[at: path]
-            case let fragment: return fragment
-            }
-        }
+        compactMap{ $0[at: path] }
+    }
+}
+
+@available(macOS 10.15, iOS 13, *)
+extension Publisher {
+    
+    public subscript(at crumbs: Path.Crumb...) -> Publishers.CompactMap<Self, Any> {
+        self[at: Path(crumbs)]
+    }
+    
+    public subscript(at path: Path) -> Publishers.CompactMap<Self, Any> {
+        compactMap{ AnyEumorphic($0)[at: path] }
     }
     
     public func `as`<T>(_: T.Type = T.self) -> Publishers.CompactMap<Self, T> {

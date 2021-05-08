@@ -97,6 +97,9 @@ extension Path: Codable {
     }
 }
 
+extension Path.Crumb {
+    public static var last: Self { ^(-1) }
+}
 
 extension Path.Crumb {
     static func string(_ string: Substring) -> Self {
