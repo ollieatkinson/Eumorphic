@@ -1,6 +1,6 @@
 # Eumorphic
 
-[Sugar for type preserving heterogeneous containers in Swift]
+[Better support for heterogeneous containers in Swift]
 
 --- 
 
