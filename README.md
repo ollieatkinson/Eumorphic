@@ -50,32 +50,36 @@ let test = Test(); class Test {
     ]
 }
 
-test.dictionary[at: "string"] // "hello world"
-test.dictionary[at: "string"] = "hello swift" // "hello swift"
+test.dictionary["string"] // "hello world"
+test.dictionary["string"] = "hello swift" // "hello swift"
 
-test.dictionary[at: "string"] == "hello swift" // true
+test.dictionary["string" as Path] == "hello swift" // true
+test.dictionary[path: "string"] == "hello swift" // true
 
-test.dictionary[at: "structure", "is", "good", 0] // true
-test.dictionary[at: "structure", "is", "good", 0, as: Bool.self] // true
-test.dictionary[at: "structure", "is", "good", 0] == "no" // false
-test.dictionary[at: "structure.is.good[0]"] // true
+test.dictionary["structure", "is", "good", 0] // true
+test.dictionary["structure", "is", "good", 0, as: Bool.self] // true
+test.dictionary["structure", "is", "good", 0] == "no" // false
+test.dictionary["structure.is.good[0]"] // true
 
-test.dictionary[at: "structure", "is", "good", 1, "and", "i", "like", 3] // nil
-test.dictionary[at: "structure", "is", "good", 1, "and", "i", "like", .last] // dogs
+test.dictionary["structure", "is", "good", 1, "and", "i", "like", 3] // nil
+test.dictionary["structure", "is", "good", 1, "and", "i", "like", .last] // dogs
 
-test.dictionary[at: "structure", "is", "good", 5, "and", "i", "like", 3] = [ "noodles", "chicken" ]
-test.dictionary[at: "structure", "is", "good", 5, "and", "i", "like", 3] // ["noodles", "chicken"]
+test.dictionary["structure", "is", "good", 5, "and", "i", "like", 3] = [ "noodles", "chicken" ]
+test.dictionary["structure", "is", "good", 5, "and", "i", "like", 3] // ["noodles", "chicken"]
 
 var bag: Set<AnyCancellable> = []
 
-test.$dictionary[at: "structure", "is", "good", 0]
+test.$dictionary["structure", "is", "good", 0]
     .collect(3)
     .assign(to: \.bools, on: test)
     .store(in: &bag)
 
-test.dictionary[at: "structure", "is", "good", 0] = false
-test.dictionary[at: "structure", "is", "good", 0] = true
+test.dictionary["structure", "is", "good", 0] = false
+test.dictionary["structure", "is", "good", 0] = true
 
 test.bools // [true, false, true]
+
+test.dictionary[path: "structure"] = true
+test.dictionary[path: "structure"] // true
 
 ```

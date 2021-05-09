@@ -56,6 +56,7 @@ extension Path {
 }
 
 extension Path {
+    public var isNotEmpty: Bool { !isEmpty }
     public var crumb: AnyRandomAccessCollection<Crumb> { base }
 }
 
@@ -98,6 +99,7 @@ extension Path: Codable {
 }
 
 extension Path.Crumb {
+    public static var first: Self { ^(0) }
     public static var last: Self { ^(-1) }
 }
 

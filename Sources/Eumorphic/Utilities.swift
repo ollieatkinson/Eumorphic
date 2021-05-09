@@ -7,7 +7,26 @@
 
 import Foundation
 
-extension Optional {
+protocol OptionalProtocol {
+    var any: Any { get }
+}
+
+func unwrap(_ any: Any) -> Any {
+    (any as? OptionalProtocol)?.any ?? any
+}
+
+extension Optional: OptionalProtocol {
+
+    static var any: Any {
+        Optional<Wrapped>.none.any
+    }
+    
+    var any: Any {
+        switch self {
+        case .none: return self as Any
+        case let .some(wrapped): return (wrapped as? OptionalProtocol)?.any ?? wrapped
+        }
+    }
     
     func or(throw error: @autoclosure () -> Error) throws -> Wrapped {
         guard let wrapped = self else { throw error() }

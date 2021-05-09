@@ -12,36 +12,36 @@ import Combine
 @available(macOS 10.15, iOS 13, *)
 extension Publisher where Output: Eumorphic {
         
-    public subscript<T>(at crumbs: Path.Crumb..., as type: T.Type = T.self) -> AnyPublisher<T, Failure> where T: Equatable {
-        self[at: Path(crumbs), as: T.self]
+    public subscript<T>(_ first: Path.Crumb, _ rest: Path.Crumb..., as type: T.Type = T.self) -> AnyPublisher<T, Failure> where T: Equatable {
+        self[Path([first] + rest), as: T.self]
     }
     
-    public subscript<T>(at path: Path, as type: T.Type = T.self) -> AnyPublisher<T, Failure> where T: Equatable {
-        self[at: path].as(T.self).scanNew().eraseToAnyPublisher()
+    public subscript<T>(path: Path, as type: T.Type = T.self) -> AnyPublisher<T, Failure> where T: Equatable {
+        self[path].as(T.self).scanNew().eraseToAnyPublisher()
     }
 }
 
 @available(macOS 10.15, iOS 13, *)
 extension Publisher where Output == AnyEumorphic {
     
-    public subscript(at crumbs: Path.Crumb...) -> Publishers.CompactMap<Self, Any> {
-        self[at: Path(crumbs)]
+    public subscript(_ first: Path.Crumb, _ rest: Path.Crumb...) -> Publishers.CompactMap<Self, Any> {
+        self[Path([first] + rest)]
     }
     
-    public subscript(at path: Path) -> Publishers.CompactMap<Self, Any> {
-        compactMap{ $0[at: path] }
+    public subscript(path: Path) -> Publishers.CompactMap<Self, Any> {
+        compactMap{ $0[path] }
     }
 }
 
 @available(macOS 10.15, iOS 13, *)
 extension Publisher {
     
-    public subscript(at crumbs: Path.Crumb...) -> Publishers.CompactMap<Self, Any> {
-        self[at: Path(crumbs)]
+    public subscript(_ first: Path.Crumb, _ rest: Path.Crumb...) -> Publishers.CompactMap<Self, Any> {
+        self[Path([first] + rest)]
     }
     
-    public subscript(at path: Path) -> Publishers.CompactMap<Self, Any> {
-        compactMap{ AnyEumorphic($0)[at: path] }
+    public subscript(path: Path) -> Publishers.CompactMap<Self, Any> {
+        compactMap{ AnyEumorphic($0)[path] }
     }
     
     public func `as`<T>(_: T.Type = T.self) -> Publishers.CompactMap<Self, T> {

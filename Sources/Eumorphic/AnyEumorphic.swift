@@ -12,11 +12,17 @@ public struct AnyEumorphic: Eumorphic {
     
     public var wrapped: Any
     
-    public init(_ wrapped: Any? = nil) { self.wrapped = wrapped as Any }
-    public func get(_ path: Path) throws -> Any? { try _get(path, from: wrapped) }
+    public init(_ wrapped: Any? = nil) {
+        self.wrapped = wrapped.any
+    }
+    
+    public func get(_ path: Path) throws -> Any {
+        try _get(path, from: wrapped)
+    }
+    
     public mutating func set(_ value: Any, at path: Path) throws {
-        if path.isEmpty { wrapped = value }
-        else { try _set(value, at: path, on: wrapped) }
+        guard path.isNotEmpty else { return (wrapped = value) }
+        wrapped = try _set(value, at: path, on: wrapped).any
     }
 }
 

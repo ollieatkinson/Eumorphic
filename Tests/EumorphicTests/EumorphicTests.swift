@@ -11,7 +11,7 @@ final class EumorphicTests: XCTestCase {
         XCTAssertEqual(empty.bidirectionalIndex(4), 4)
         XCTAssertEqual(empty.bidirectionalIndex(10), 10)
         XCTAssertEqual(empty.bidirectionalIndex(11), 11)
-//        XCTAssertEqual(empty.bidirectionalIndex(-1), 0) // "cannot calculate bidirectional index for an empty collection"
+        XCTAssertEqual(empty.bidirectionalIndex(-1), 0)
         
         let array1 = Array(0...5) as [Any]
         XCTAssertEqual(array1.count, 6)
@@ -52,18 +52,19 @@ final class EumorphicTests: XCTestCase {
         
         try XCTAssert(get("string", from: dictionary) == "hello world")
         
-        XCTAssert(dictionary[at: "string"] == "hello world")
-        XCTAssert(dictionary[at: "int"] == 1)
+        XCTAssert(dictionary["string" as Path] == "hello world")
+        XCTAssert(dictionary["int" as Path] == 1)
 
-        XCTAssert(dictionary[at: "structure", "is", "good", 0] == true)
-        XCTAssert(dictionary[at: "structure.is.good[0]"] == true)
+        XCTAssert(dictionary["structure", "is", "good", 0] == true)
+        XCTAssert(dictionary["structure.is.good[0]" as Path] == true)
+        XCTAssert(dictionary[path: "structure.is.good[0]"] == true)
+
+        XCTAssertNil(dictionary["structure", "is", "good", 1, "and", "i", "like", 3])
         
-        XCTAssertNil(dictionary[at: "structure", "is", "good", 1, "and", "i", "like", 3])
+        dictionary["structure", "is", "good", 5, "and", "i", "like", 3] = [ "noodles", "chicken" ]
         
-        dictionary[at: "structure", "is", "good", 5, "and", "i", "like", 3] = [ "noodles", "chicken" ]
-        
-        XCTAssert(dictionary[at: "structure", "is", "good", 5, "and", "i", "like", 3] == ["noodles", "chicken"])
-        XCTAssert(dictionary[at: "structure.is.good[5].and.i.like[3]" as Path] == ["noodles", "chicken"])
+        XCTAssert(dictionary["structure", "is", "good", 5, "and", "i", "like", 3] == ["noodles", "chicken"])
+        XCTAssert(dictionary[path: "structure.is.good[5].and.i.like[3]"] == ["noodles", "chicken"])
     }
     
     func test_publisher() throws {
@@ -97,13 +98,13 @@ final class EumorphicTests: XCTestCase {
         let test = Test()
         var bag = Set<AnyCancellable>()
         
-        test.$json[at: "structure", "is", "good", 0]
+        test.$json["structure", "is", "good", 0]
             .collect(3)
             .assign(to: \.bools, on: test)
             .store(in: &bag)
         
-        test.json[at: "structure", "is", "good", 0] = false
-        test.json[at: "structure", "is", "good", 0] = true
+        test.json["structure", "is", "good", 0] = false
+        test.json["structure", "is", "good", 0] = true
         
         XCTAssertEqual(test.bools, [true, false, true])
         
