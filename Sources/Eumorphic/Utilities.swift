@@ -8,23 +8,19 @@
 import Foundation
 
 protocol OptionalProtocol {
-    var any: Any { get }
+    var unwrapped: Any { get }
 }
 
 func unwrap(_ any: Any) -> Any {
-    (any as? OptionalProtocol)?.any ?? any
+    (any as? OptionalProtocol)?.unwrapped ?? any
 }
 
 extension Optional: OptionalProtocol {
-
-    static var any: Any {
-        Optional<Wrapped>.none.any
-    }
     
-    var any: Any {
+    var unwrapped: Any {
         switch self {
         case .none: return self as Any
-        case let .some(wrapped): return (wrapped as? OptionalProtocol)?.any ?? wrapped
+        case let .some(wrapped): return (wrapped as? OptionalProtocol)?.unwrapped ?? wrapped
         }
     }
     
@@ -44,16 +40,14 @@ extension String {
         .init(message: self, function: function, file: file, line: line)
     }
     
-    struct Error: Swift.Error, CustomStringConvertible {
+    struct Error: Swift.Error, CustomStringConvertible, CustomDebugStringConvertible {
+        
         let message: String
         let function: String
         let file: String
         let line: Int
         
-        var description: String {
-            """
-            \(message) ← ‼️ \(file)#\(line)
-            """
-        }
+        var description: String { message }
+        var debugDescription: String { "\(message) ← \(file)#\(line)" }
     }
 }

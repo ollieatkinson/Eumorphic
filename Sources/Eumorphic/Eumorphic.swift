@@ -58,7 +58,7 @@ extension Dictionary: Eumorphic where Key == String, Value == Any {
         switch (head.stringValue, remaining) {
         case nil: return
         case let (key, remaining):
-            self[key] = try _set(value, at: remaining, on: self[key])
+            self[key] = try _set(value, at: remaining, on: self[key] as Any)
         }
     }
 }
@@ -75,11 +75,11 @@ extension Array: Eumorphic where Element == Any {
     public mutating func set(_ value: Element, at path: Path) throws {
         guard let (head, remaining) = path.first else { return }
         guard let idx = head.intValue.map(bidirectionalIndex) else { return }
-        padded(to: idx, with: Optional<Any>.any)
+        padded(to: idx, with: Optional<Any>.none as Any)
         switch (idx, remaining) {
         case nil: return
         case let (idx, remaining):
-            self[idx] = try _set(value, at: remaining, on: self[idx]) as Any
+            self[idx] = try _set(value, at: remaining, on: self[idx])
         }
     }
     
@@ -100,26 +100,31 @@ extension RangeReplaceableCollection where Self: BidirectionalCollection {
 
 // MARK :- get/set
 
-func get<T>(_ path: Path, from any: Any, as _: T.Type = T.self) throws -> T? {
+@_spi(Eumorphic)
+public func get<T>(_ path: Path, from any: Any, as _: T.Type = T.self) throws -> T? {
     let any: Any = try _get(path, from: any)
     return try (any as? T).or(throw: "\(type(of: any)) is not \(T.self)".error())
 }
 
-func _get(_ path: Path, from any: Any) throws -> Any {
+@_spi(Eumorphic)
+public func _get(_ path: Path, from any: Any) throws -> Any {
     switch any {
+    case let eumorphic as Eumorphic: return try eumorphic.get(path)
     case let array as [Any]: return try array.get(path)
     case let dictionary as [String: Any]: return try dictionary.get(path)
-    case let fragment where path.isEmpty: return unwrap(fragment)
+    case let fragment where path.isEmpty: return fragment
     case let fragment: throw "Path indexing into \(fragment) of \(type(of: fragment)) not allowed".error()
     }
 }
 
-func set<T>(_ value: T, at path: Path, on any: Any?) throws -> Any? {
+@_spi(Eumorphic)
+public func set<T>(_ value: T, at path: Path, on any: Any) throws -> Any {
     try _set(value, at: path, on: any)
 }
 
-func _set(_ value: Any, at path: Path, on any: Any?) throws -> Any? {
-    guard let (crumb, _) = path.first else { return value }
+@_spi(Eumorphic)
+public func _set(_ value: Any, at path: Path, on any: Any) throws -> Any {
+    guard let (crumb, _) = path.first else { return unwrap(value) }
     switch crumb {
     case .int:
         var array = (any as? [Any]) ?? []

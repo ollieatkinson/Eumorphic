@@ -50,8 +50,6 @@ final class EumorphicTests: XCTestCase {
             ]
         ]
         
-        try XCTAssert(get("string", from: dictionary) == "hello world")
-        
         XCTAssert(dictionary["string" as Path] == "hello world")
         XCTAssert(dictionary["int" as Path] == 1)
 
@@ -66,48 +64,4 @@ final class EumorphicTests: XCTestCase {
         XCTAssert(dictionary["structure", "is", "good", 5, "and", "i", "like", 3] == ["noodles", "chicken"])
         XCTAssert(dictionary[path: "structure.is.good[5].and.i.like[3]"] == ["noodles", "chicken"])
     }
-    
-    func test_publisher() throws {
-        
-        class Test {
-            @Published var json: [String: Any] = [
-                "string": "hello world",
-                "int": 1,
-                "structure": [
-                    "is": [
-                        "good": [
-                            true,
-                            [
-                                "and": [
-                                    "i": [
-                                        "like": [
-                                            "pie",
-                                            "programming",
-                                            "dogs"
-                                        ]
-                                    ]
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
-            ]
-            var bools: [Bool] = []
-        }
-        
-        let test = Test()
-        var bag = Set<AnyCancellable>()
-        
-        test.$json["structure", "is", "good", 0]
-            .collect(3)
-            .assign(to: \.bools, on: test)
-            .store(in: &bag)
-        
-        test.json["structure", "is", "good", 0] = false
-        test.json["structure", "is", "good", 0] = true
-        
-        XCTAssertEqual(test.bools, [true, false, true])
-        
-    }
-    
 }

@@ -5,15 +5,8 @@
 --- 
 
 `Any`,  `[Any]` and `[String: Any]` are type-erased values which allow for the storage of heterogeneous data structures.
-Typically these erased structures are difficult to work with and are seen quite a lot with code that utilises `JSONSerialization`. 
+Typically these erased structures are difficult to work with and are often seen with code that utilises `JSONSerialization` or Cocoa API's such as Bundle and UserDefaults. 
 Eumorphic aims to ease the burden of use by providing a light sugar over these erased types.
-
-Offered in the package are the following features:
-
-1. Path get/set for deeply nested data
-2. Publisher for Path
-3. Path is Collection, String, Codable and Hashable
-4. AnyEumorphic for wrapping the original data structure or creating entirely new ones
 
 ---
 
@@ -21,26 +14,21 @@ Offered in the package are the following features:
 
 ```swift
 import Eumorphic
-import Combine
 
-let test = Test(); class Test {
-    
-    var bools: [Bool] = []
-    @Published var dictionary: [String: Any] = [
-        "string": "hello world",
-        "int": 1,
-        "structure": [
-            "is": [
-                "good": [
-                    true,
-                    [
-                        "and": [
-                            "i": [
-                                "like": [
-                                    "pie",
-                                    "programming",
-                                    "dogs"
-                                ]
+var dictionary: [String: Any] = [
+    "string": "hello world",
+    "int": 1,
+    "structure": [
+        "is": [
+            "good": [
+                true,
+                [
+                    "and": [
+                        "i": [
+                            "like": [
+                                "pie",
+                                "programming",
+                                "dogs"
                             ]
                         ]
                     ]
@@ -48,38 +36,29 @@ let test = Test(); class Test {
             ]
         ]
     ]
-}
+]
 
-test.dictionary["string"] // "hello world"
-test.dictionary["string"] = "hello swift" // "hello swift"
+dictionary["string"] // "hello world"
+dictionary["string"] = "hello swift" // "hello swift"
 
-test.dictionary["string" as Path] == "hello swift" // true
-test.dictionary[path: "string"] == "hello swift" // true
+dictionary["string" as Path] == "hello swift" // true
+dictionary[path: "string"] == "hello swift" // true
 
-test.dictionary["structure", "is", "good", 0] // true
-test.dictionary["structure", "is", "good", 0, as: Bool.self] // true
-test.dictionary["structure", "is", "good", 0] == "no" // false
-test.dictionary["structure.is.good[0]"] // true
+dictionary["structure", "is", "good", 0] // true
+dictionary["structure", "is", "good", 0, as: Bool.self] // true
+dictionary["structure", "is", "good", 0] == "no" // false
+dictionary["structure.is.good[0]" as Path] // true
 
-test.dictionary["structure", "is", "good", 1, "and", "i", "like", 3] // nil
-test.dictionary["structure", "is", "good", 1, "and", "i", "like", .last] // dogs
+dictionary["structure", "is", "good", 1, "and", "i", "like", 3] // nil
+dictionary["structure", "is", "good", 1, "and", "i", "like", .last] // dogs
 
-test.dictionary["structure", "is", "good", 5, "and", "i", "like", 3] = [ "noodles", "chicken" ]
-test.dictionary["structure", "is", "good", 5, "and", "i", "like", 3] // ["noodles", "chicken"]
+dictionary["structure", "is", "good", 5, "and", "i", "like", 3] = [ "noodles", "chicken" ]
+dictionary["structure", "is", "good", 5, "and", "i", "like", 3] // ["noodles", "chicken"]
 
-var bag: Set<AnyCancellable> = []
+dictionary["structure", "is", "good", .first] = false
+dictionary["structure", "is", "good", .first] = true
 
-test.$dictionary["structure", "is", "good", 0]
-    .collect(3)
-    .assign(to: \.bools, on: test)
-    .store(in: &bag)
-
-test.dictionary["structure", "is", "good", 0] = false
-test.dictionary["structure", "is", "good", 0] = true
-
-test.bools // [true, false, true]
-
-test.dictionary[path: "structure"] = true
-test.dictionary[path: "structure"] // true
+dictionary[path: "structure"] = true
+dictionary[path: "structure"] // true
 
 ```
