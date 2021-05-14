@@ -64,4 +64,30 @@ final class EumorphicTests: XCTestCase {
         XCTAssert(dictionary["structure", "is", "good", 5, "and", "i", "like", 3] == ["noodles", "chicken"])
         XCTAssert(dictionary[path: "structure.is.good[5].and.i.like[3]"] == ["noodles", "chicken"])
     }
+    
+    func test_any_value() throws {
+        
+        var value: AnyValue = [
+            "nested": [
+                "value": [true, false]
+            ]
+        ]
+        
+        var bag: Set<AnyCancellable> = []
+        let promise = expectation(description: "\(#line)@\(#function)")
+        promise.expectedFulfillmentCount = 3
+        
+        value.subscribe(to: "nested", "value", 0).sink { result in
+            switch result {
+            case let .success(value): promise.fulfill(); print(value)
+            default: XCTFail()
+            }
+        }.store(in: &bag)
+        
+        value["nested", "value", 0] = false
+        value["nested", "value", 0] = true
+        
+        waitForExpectations(timeout: 1)
+        
+    }
 }

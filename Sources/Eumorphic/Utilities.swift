@@ -11,7 +11,7 @@ public protocol FlattenOptional {
     var flattened: Any? { get }
 }
 
-public func flattenOptionality(_ any: Any) -> Any? {
+public func flattenOptionality(_ any: Any) -> Any {
     (any as? FlattenOptional)?.flattened ?? any
 }
 

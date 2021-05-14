@@ -4,7 +4,7 @@ import PackageDescription
 
 let package = Package(
     name: "Eumorphic",
-    platforms: [.macOS(.v10_14), .iOS(.v12)],
+    platforms: [.macOS(.v10_15), .iOS(.v13)],
     products: [
         .library(name: "Eumorphic", targets: ["Eumorphic"]),
     ],

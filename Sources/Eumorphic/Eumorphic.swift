@@ -59,7 +59,7 @@ extension Dictionary: Eumorphic where Key == String, Value == Any {
     
     public func get(_ path: Path) throws -> Value {
         guard let (head, remaining) = path.first else { return self }
-        guard let value = self[head.stringValue] else { throw "Value does not exist at \(path) in \(self)".error() }
+        guard let value = self[head.stringValue] else { throw "\(path) → Key \(head.stringValue) does not exist at \(self)".error() }
         return try _get(remaining, from: value)
     }
     
@@ -77,8 +77,8 @@ extension Array: Eumorphic where Element == Any {
     
     public func get(_ path: Path) throws -> Element {
         guard let (head, remaining) = path.first else { return self }
-        guard let idx = head.intValue.map(bidirectionalIndex) else { throw "Path indexing into array \(self) must be an Int - got: \(path)".error() }
-        guard indices.contains(idx) else { throw "Array index '\(idx)' out of bounds".error() }
+        guard let idx = head.intValue.map(bidirectionalIndex) else { throw "\(path) → Path indexing into array \(self) must be an Int - got: \(head.stringValue)".error() }
+        guard indices.contains(idx) else { throw "\(path) → Array index '\(idx)' out of bounds".error() }
         return try _get(remaining, from: self[idx])
     }
     
@@ -122,8 +122,8 @@ public func _get(_ path: Path, from any: Any) throws -> Any {
     case let eumorphic as Eumorphic: return try eumorphic.get(path)
     case let array as [Any]: return try array.get(path)
     case let dictionary as [String: Any]: return try dictionary.get(path)
-    case let fragment where path.isEmpty: return fragment
-    case let fragment: throw "Path indexing into \(fragment) of \(type(of: fragment)) not allowed".error()
+    case let fragment where path.isEmpty: return fragment as Any
+    case let fragment: throw "\(path) → Path indexing into \(fragment) of \(type(of: fragment)) not allowed".error()
     }
 }
 
@@ -134,7 +134,7 @@ public func set<T>(_ value: T, at path: Path, on any: Any) throws -> Any {
 
 @_spi(Eumorphic)
 public func _set(_ value: Any, at path: Path, on any: Any) throws -> Any {
-    guard let (crumb, _) = path.first else { return flattenOptionality(value) as Any }
+    guard let (crumb, _) = path.first else { return flattenOptionality(value) }
     switch crumb {
     case .int:
         var array = (any as? [Any]) ?? []
