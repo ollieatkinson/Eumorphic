@@ -9,6 +9,12 @@ import Foundation
 
 prefix operator ^ // Lift operator to convert Int or String to Path.Crumb
 
+extension Eumorphic {
+    public typealias Path = EumorphicPath
+}
+
+public typealias EumorphicPath = Path
+
 public struct Path: Collection {
     
     public enum Crumb {
@@ -52,6 +58,17 @@ extension Path {
     }
     public subscript(position: Base.Index) -> (head: Crumb, tail: Path) {
         return (base[position], Path(base.suffix(from: index(after: position))))
+    }
+}
+
+extension Path {
+    
+    public func appending(_ other: Path.Crumb) -> Path {
+        Path([crumb, AnyRandomAccessCollection([other])].flatMap{ $0 })
+    }
+    
+    public func appending(_ path: Path) -> Path {
+        Path([crumb, path.crumb].flatMap{ $0 })
     }
 }
 

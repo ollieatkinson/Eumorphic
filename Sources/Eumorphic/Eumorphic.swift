@@ -24,6 +24,11 @@ extension Eumorphic {
         set { self[path] = newValue }
     }
     
+    public subscript() -> Any? {
+        get { self[Path()] }
+        set { self[Path()] = newValue }
+    }
+    
     public subscript(path: Path) -> Any? {
         get { self[path, as: Any.self] }
         set { self[path, as: Any.self] = newValue }
@@ -37,6 +42,11 @@ extension Eumorphic {
     public subscript<T>(path path: Path, as type: T.Type = T.self) -> T? {
         get { self[path, as: T.self] }
         set { self[path, as: T.self] = newValue }
+    }
+    
+    public subscript<T>(as type: T.Type = T.self) -> T? {
+        get { self[Path()] }
+        set { self[Path()] = newValue }
     }
     
     public subscript<T>(path: Path, as type: T.Type = T.self) -> T? {
@@ -124,7 +134,7 @@ public func set<T>(_ value: T, at path: Path, on any: Any) throws -> Any {
 
 @_spi(Eumorphic)
 public func _set(_ value: Any, at path: Path, on any: Any) throws -> Any {
-    guard let (crumb, _) = path.first else { return unwrap(value) }
+    guard let (crumb, _) = path.first else { return flattenOptionality(value) as Any }
     switch crumb {
     case .int:
         var array = (any as? [Any]) ?? []

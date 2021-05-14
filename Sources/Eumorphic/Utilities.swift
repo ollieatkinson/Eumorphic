@@ -7,20 +7,31 @@
 
 import Foundation
 
-protocol OptionalProtocol {
-    var unwrapped: Any { get }
+public protocol FlattenOptional {
+    var flattened: Any? { get }
 }
 
-func unwrap(_ any: Any) -> Any {
-    (any as? OptionalProtocol)?.unwrapped ?? any
+public func flattenOptionality(_ any: Any) -> Any? {
+    (any as? FlattenOptional)?.flattened ?? any
 }
 
-extension Optional: OptionalProtocol {
+public func isNil(_ any: Any?) -> Bool {
+    switch any {
+    case .none: return true
+    case let .some(any):
+        switch any {
+        case let optional as FlattenOptional: return optional.flattened == nil
+        default: return true
+        }
+    }
+}
+
+extension Optional: FlattenOptional {
     
-    var unwrapped: Any {
+    public var flattened: Any? {
         switch self {
         case .none: return self as Any
-        case let .some(wrapped): return (wrapped as? OptionalProtocol)?.unwrapped ?? wrapped
+        case let .some(wrapped): return (wrapped as? FlattenOptional)?.flattened ?? wrapped
         }
     }
     
@@ -47,7 +58,7 @@ extension String {
         let file: String
         let line: Int
         
-        var description: String { message }
-        var debugDescription: String { "\(message) ← \(file)#\(line)" }
+        public var description: String { message }
+        public var debugDescription: String { "\(message) ← \(file)#\(line)" }
     }
 }
