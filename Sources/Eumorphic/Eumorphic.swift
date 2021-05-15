@@ -44,7 +44,7 @@ extension Eumorphic {
         set { self[path, as: T.self] = newValue }
     }
     
-    public subscript<T>(as type: T.Type = T.self) -> T? {
+    public subscript<T>(type: T.Type = T.self) -> T? {
         get { self[Path()] }
         set { self[Path()] = newValue }
     }
