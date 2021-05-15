@@ -24,8 +24,8 @@ extension Eumorphic {
         set { self[path] = newValue }
     }
     
-    public subscript() -> Any? {
-        get { self[Path()] }
+    public subscript() -> Any {
+        get { self[Path()]! }
         set { self[Path()] = newValue }
     }
     

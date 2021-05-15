@@ -16,13 +16,9 @@ public func flattenOptionality(_ any: Any) -> Any {
 }
 
 public func isNil(_ any: Any?) -> Bool {
-    switch any {
+    switch any.flattened {
     case .none: return true
-    case let .some(any):
-        switch any {
-        case let optional as FlattenOptional: return optional.flattened == nil
-        default: return true
-        }
+    case .some: return false
     }
 }
 

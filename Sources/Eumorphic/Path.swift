@@ -27,6 +27,16 @@ public struct Path: Collection {
     
     let base: Base
     
+    public init<C>(_ codingPath: C) where C: RandomAccessCollection, C.Element == CodingKey {
+        self.base = AnyRandomAccessCollection(codingPath.map { key in
+            if let idx = key.intValue {
+                return ^idx
+            } else {
+                return ^key.stringValue
+            }
+        })
+    }
+    
     public init<C>(_ base: C) where C: RandomAccessCollection, C.Element == Crumb {
         self.base = AnyRandomAccessCollection(base)
     }
