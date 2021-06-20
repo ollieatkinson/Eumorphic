@@ -1,8 +1,5 @@
 //
-//  Eumorphic.swift
-//
-//
-//  Created by Oliver Atkinson on 08/05/2021.
+//  Created by Oliver Atkinson
 //
 
 import Foundation
@@ -12,9 +9,32 @@ public protocol Eumorphic {
     mutating func set(_ value: Any, at path: Path) throws
 }
 
+public enum GetError: Error {
+    case pathDoesNotExist(EumorphicPath, description: String)
+    case other(Error)
+}
+
 extension Eumorphic {
     
-    public subscript(_ first: Path.Crumb, _ rest: Path.Crumb...) -> Any? {
+    public subscript() -> Any { self }
+    public subscript<T>(type: T.Type = T.self) -> T? { self as? T }
+    
+    public subscript(codingPath: CodingKey, _ rest: CodingKey...) -> Any? {
+        get { self[Path([codingPath] + rest)] }
+        set { self[Path([codingPath] + rest)] = newValue }
+    }
+    
+    public subscript<C>(codingPath: C) -> Any? where C: RandomAccessCollection, C.Element == CodingKey {
+        get { self[Path(codingPath)] }
+        set { self[Path(codingPath)] = newValue }
+    }
+    
+    public subscript<C>(codingPath: C) -> Any? where C: RandomAccessCollection, C.Element: CodingKey {
+        get { self[Path(codingPath)] }
+        set { self[Path(codingPath)] = newValue }
+    }
+    
+    public subscript(_ first: Path.Key, _ rest: Path.Key...) -> Any? {
         get { self[Path([first] + rest), as: Any.self] }
         set { self[Path([first] + rest), as: Any.self] = newValue }
     }
@@ -24,17 +44,12 @@ extension Eumorphic {
         set { self[path] = newValue }
     }
     
-    public subscript() -> Any {
-        get { self[Path()]! }
-        set { self[Path()] = newValue }
-    }
-    
     public subscript(path: Path) -> Any? {
         get { self[path, as: Any.self] }
         set { self[path, as: Any.self] = newValue }
     }
     
-    public subscript<T>(_ first: Path.Crumb, _ rest: Path.Crumb..., as type: T.Type = T.self) -> T? {
+    public subscript<T>(_ first: Path.Key, _ rest: Path.Key..., as type: T.Type = T.self) -> T? {
         get { try? get(Path([first] + rest)) as? T }
         set { try? set(newValue as Any, at: Path([first] + rest)) }
     }
@@ -42,11 +57,6 @@ extension Eumorphic {
     public subscript<T>(path path: Path, as type: T.Type = T.self) -> T? {
         get { self[path, as: T.self] }
         set { self[path, as: T.self] = newValue }
-    }
-    
-    public subscript<T>(type: T.Type = T.self) -> T? {
-        get { self[Path()] }
-        set { self[Path()] = newValue }
     }
     
     public subscript<T>(path: Path, as type: T.Type = T.self) -> T? {
@@ -57,13 +67,13 @@ extension Eumorphic {
 
 extension Dictionary: Eumorphic where Key == String, Value == Any {
     
-    public func get(_ path: Path) throws -> Value {
+    public func get(_ path: EumorphicPath) throws -> Value {
         guard let (head, remaining) = path.first else { return self }
-        guard let value = self[head.stringValue] else { throw "\(path) → Key \(head.stringValue) does not exist at \(self)".error() }
+        guard let value = self[head.stringValue] else { throw GetError.pathDoesNotExist(path, description: "\(path) → Key \(head.stringValue) does not exist at \(self)") }
         return try _get(remaining, from: value)
     }
     
-    public mutating func set(_ value: Any, at path: Path) throws {
+    public mutating func set(_ value: Any, at path: EumorphicPath) throws {
         guard let (head, remaining) = path.first else { return }
         switch (head.stringValue, remaining) {
         case nil: return
@@ -75,14 +85,14 @@ extension Dictionary: Eumorphic where Key == String, Value == Any {
 
 extension Array: Eumorphic where Element == Any {
     
-    public func get(_ path: Path) throws -> Element {
+    public func get(_ path: EumorphicPath) throws -> Element {
         guard let (head, remaining) = path.first else { return self }
-        guard let idx = head.intValue.map(bidirectionalIndex) else { throw "\(path) → Path indexing into array \(self) must be an Int - got: \(head.stringValue)".error() }
-        guard indices.contains(idx) else { throw "\(path) → Array index '\(idx)' out of bounds".error() }
+        guard let idx = head.intValue.map(bidirectionalIndex) else { throw GetError.pathDoesNotExist(path, description: "\(path) → Path indexing into array \(self) must be an Int - got: \(head.stringValue)") }
+        guard indices.contains(idx) else { throw GetError.other("\(path) → Array index '\(idx)' out of bounds".error()) }
         return try _get(remaining, from: self[idx])
     }
     
-    public mutating func set(_ value: Element, at path: Path) throws {
+    public mutating func set(_ value: Element, at path: EumorphicPath) throws {
         guard let (head, remaining) = path.first else { return }
         guard let idx = head.intValue.map(bidirectionalIndex) else { return }
         padded(to: idx, with: Optional<Any>.none as Any)
@@ -111,29 +121,29 @@ extension RangeReplaceableCollection where Self: BidirectionalCollection {
 // MARK :- get/set
 
 @_spi(Eumorphic)
-public func get<T>(_ path: Path, from any: Any, as _: T.Type = T.self) throws -> T? {
+public func get<T>(_ path: EumorphicPath, from any: Any, as _: T.Type = T.self) throws -> T? {
     let any: Any = try _get(path, from: any)
-    return try (any as? T).or(throw: "\(type(of: any)) is not \(T.self)".error())
+    return try (any as? T).or(throw: GetError.other("\(type(of: any)) is not \(T.self)".error()))
 }
 
 @_spi(Eumorphic)
-public func _get(_ path: Path, from any: Any) throws -> Any {
+public func _get(_ path: EumorphicPath, from any: Any) throws -> Any {
     switch any {
     case let eumorphic as Eumorphic: return try eumorphic.get(path)
     case let array as [Any]: return try array.get(path)
     case let dictionary as [String: Any]: return try dictionary.get(path)
     case let fragment where path.isEmpty: return fragment as Any
-    case let fragment: throw "\(path) → Path indexing into \(fragment) of \(type(of: fragment)) not allowed".error()
+    case let fragment: throw GetError.pathDoesNotExist(path, description: "\(path) → Path indexing into \(fragment) of \(type(of: fragment)) not allowed")
     }
 }
 
 @_spi(Eumorphic)
-public func set<T>(_ value: T, at path: Path, on any: Any) throws -> Any {
+public func set<T>(_ value: T, at path: EumorphicPath, on any: Any) throws -> Any {
     try _set(value, at: path, on: any)
 }
 
 @_spi(Eumorphic)
-public func _set(_ value: Any, at path: Path, on any: Any) throws -> Any {
+public func _set(_ value: Any, at path: EumorphicPath, on any: Any) throws -> Any {
     guard let (crumb, _) = path.first else { return flattenOptionality(value) }
     switch crumb {
     case .int:

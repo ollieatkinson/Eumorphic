@@ -1,13 +1,11 @@
 //
-//  String.swift
-//  
-//
-//  Created by Oliver Atkinson on 08/05/2021.
+//  Created by Oliver Atkinson
 //
 
 import Foundation
 
 public protocol FlattenOptional {
+    static var null: FlattenOptional { get }
     var flattened: Any? { get }
 }
 
@@ -23,6 +21,8 @@ public func isNil(_ any: Any?) -> Bool {
 }
 
 extension Optional: FlattenOptional {
+    
+    public static var null: FlattenOptional { return Optional.none as FlattenOptional }
     
     public var flattened: Any? {
         switch self {

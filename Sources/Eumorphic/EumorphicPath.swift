@@ -1,28 +1,22 @@
 //
-//  Path.swift
-//  
-//
-//  Created by Oliver Atkinson on 08/05/2021.
+//  Created by Oliver Atkinson
 //
 
 import Foundation
 
-prefix operator ^ // Lift operator to convert Int or String to Path.Crumb
+prefix operator ^
 
 extension Eumorphic {
     public typealias Path = EumorphicPath
 }
 
-public typealias EumorphicPath = Path
-
-public struct Path: Collection {
+public struct EumorphicPath: Collection {
     
-    public enum Crumb {
-        case int(Int)
-        case string(String)
+    public enum Key {
+        case int(Int), string(String)
     }
     
-    public typealias Base = AnyRandomAccessCollection<Crumb>
+    public typealias Base = AnyRandomAccessCollection<Key>
     public typealias Index = Base.Index
     
     let base: Base
@@ -37,19 +31,27 @@ public struct Path: Collection {
         })
     }
     
-    public init<C>(_ base: C) where C: RandomAccessCollection, C.Element == Crumb {
+    public init<C>(_ codingPath: C) where C: RandomAccessCollection, C.Element: CodingKey {
+        self.init(codingPath.lazy.map{ $0 as CodingKey })
+    }
+    
+    public init<C>(_ base: C) where C: RandomAccessCollection, C.Element == Key {
         self.base = AnyRandomAccessCollection(base)
     }
 }
 
-extension Path: ExpressibleByArrayLiteral {
+extension EumorphicPath: ExpressibleByArrayLiteral {
     
-    public init(arrayLiteral elements: Crumb...) {
+    public init(arrayLiteral elements: Key...) {
+        self.init(elements)
+    }
+    
+    public init(arrayLiteral elements: CodingKey...) {
         self.init(elements)
     }
 }
 
-extension Path {
+extension EumorphicPath {
     
     public var startIndex: Index { base.startIndex }
     public var endIndex: Index { base.endIndex }
@@ -66,44 +68,44 @@ extension Path {
     public func distance(from start: Base.Index, to end: Base.Index) -> Int {
         base.distance(from: start, to: end)
     }
-    public subscript(position: Base.Index) -> (head: Crumb, tail: Path) {
-        return (base[position], Path(base.suffix(from: index(after: position))))
+    public subscript(position: Base.Index) -> (head: Key, tail: EumorphicPath) {
+        return (base[position], EumorphicPath(base.suffix(from: index(after: position))))
     }
 }
 
-extension Path {
+extension EumorphicPath {
     
-    public func appending(_ other: Path.Crumb) -> Path {
-        Path([crumb, AnyRandomAccessCollection([other])].flatMap{ $0 })
+    public func appending(_ other: EumorphicPath.Key) -> EumorphicPath {
+        EumorphicPath([crumb, AnyRandomAccessCollection([other])].flatMap{ $0 })
     }
     
-    public func appending(_ path: Path) -> Path {
-        Path([crumb, path.crumb].flatMap{ $0 })
+    public func appending(_ path: EumorphicPath) -> EumorphicPath {
+        EumorphicPath([crumb, path.crumb].flatMap{ $0 })
     }
 }
 
-extension Path {
+extension EumorphicPath {
     public var isNotEmpty: Bool { !isEmpty }
-    public var crumb: AnyRandomAccessCollection<Crumb> { base }
+    public var crumb: AnyRandomAccessCollection<Key> { base }
 }
 
-extension Path: BidirectionalCollection {
+extension EumorphicPath: BidirectionalCollection {
     
     public func index(before i: Base.Index) -> Base.Index {
         base.index(before: i)
     }
 }
 
-extension Path: RandomAccessCollection {}
-extension Path: LazySequenceProtocol {}
-extension Path: LazyCollectionProtocol {}
-extension Path: Equatable {
+extension EumorphicPath: RandomAccessCollection {}
+extension EumorphicPath: LazySequenceProtocol {}
+extension EumorphicPath: LazyCollectionProtocol {}
+extension EumorphicPath: Equatable {
     
-    public static func == (lhs: Path, rhs: Path) -> Bool {
+    public static func == (lhs: EumorphicPath, rhs: EumorphicPath) -> Bool {
         lhs.base.elementsEqual(rhs.base)
     }
 }
-extension Path: Hashable {
+extension EumorphicPath: Hashable {
     
     public func hash(into hasher: inout Hasher) {
         hasher.combine(count)
@@ -113,7 +115,7 @@ extension Path: Hashable {
     }
 }
 
-extension Path: Codable {
+extension EumorphicPath: Codable {
     
     public init(from decoder: Decoder) throws {
         let string = try String(from: decoder)
@@ -125,18 +127,18 @@ extension Path: Codable {
     }
 }
 
-extension Path.Crumb {
+extension EumorphicPath.Key {
     public static var first: Self { ^(0) }
     public static var last: Self { ^(-1) }
 }
 
-extension Path.Crumb {
+extension EumorphicPath.Key {
     static func string(_ string: Substring) -> Self {
         .string(string.string)
     }
 }
 
-extension Path.Crumb: CodingKey, ExpressibleByStringLiteral, ExpressibleByIntegerLiteral {
+extension EumorphicPath.Key: CodingKey, ExpressibleByStringLiteral, ExpressibleByIntegerLiteral {
     
     public init(stringLiteral value: String) {
         self = .string(value)
@@ -170,7 +172,7 @@ extension Path.Crumb: CodingKey, ExpressibleByStringLiteral, ExpressibleByIntege
     
 }
 
-extension Path.Crumb: Hashable {
+extension EumorphicPath.Key: Hashable {
     
     public func hash(into hasher: inout Hasher) {
         switch self {
@@ -179,7 +181,7 @@ extension Path.Crumb: Hashable {
         }
     }
     
-    public static func == (lhs: Path.Crumb, rhs: Path.Crumb) -> Bool {
+    public static func == (lhs: EumorphicPath.Key, rhs: EumorphicPath.Key) -> Bool {
         switch (lhs, rhs) {
         case let (.int(i), .int(j)): return i == j
         case let (.string(i), .string(j)): return i == j
@@ -189,10 +191,10 @@ extension Path.Crumb: Hashable {
     
 }
 
-public prefix func ^ (r: Int) -> Path.Crumb { .int(r) }
-public prefix func ^ <S>(r: S) -> Path.Crumb where S: StringProtocol { .string(r.string) }
+public prefix func ^ (r: Int) -> EumorphicPath.Key { .int(r) }
+public prefix func ^ <S>(r: S) -> EumorphicPath.Key where S: StringProtocol { .string(r.string) }
 
-extension Path.Crumb: CustomStringConvertible {
+extension EumorphicPath.Key: CustomStringConvertible {
     
     public var description: String {
         switch self {
@@ -202,7 +204,7 @@ extension Path.Crumb: CustomStringConvertible {
     }
 }
 
-extension Path.Crumb {
+extension EumorphicPath.Key {
     
     public var isInt: Bool {
         switch self {
@@ -219,7 +221,7 @@ extension Path.Crumb {
     }
 }
 
-extension Path.Crumb {
+extension EumorphicPath.Key {
     
     public init(_ string: String) {
         self = .string(string)
@@ -230,7 +232,7 @@ extension Path.Crumb {
     }
 }
 
-extension Path.Crumb: Codable {
+extension EumorphicPath.Key: Codable {
     
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
@@ -263,20 +265,20 @@ extension StringProtocol {
     fileprivate var string: String { String(self) }
 }
 
-extension Path: ExpressibleByStringLiteral {
+extension EumorphicPath: ExpressibleByStringLiteral {
     
     public init(stringLiteral value: String) {
         self.init(value)!
     }
 }
 
-extension Path: LosslessStringConvertible {
+extension EumorphicPath: LosslessStringConvertible {
     
     public static let pattern = try! NSRegularExpression(pattern: #"\.?((?<name>[\w]+)|\[(?<idx>[\d]+)\])"#)
     
     public init?(_ description: String) {
         do {
-            self = try Self(Path.pattern.matches(in: description, range: NSRange(description.startIndex..<description.endIndex, in: description)).map { match in
+            self = try Self(EumorphicPath.pattern.matches(in: description, range: NSRange(description.startIndex..<description.endIndex, in: description)).map { match in
                 
                 let range = (
                     name: match.range(withName: "name"),
