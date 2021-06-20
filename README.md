@@ -1,4 +1,4 @@
-# Eumorphic
+# AnyValue
 
 [Better support for heterogeneous containers in Swift]
 
@@ -6,14 +6,14 @@
 
 `Any`,  `[Any]` and `[String: Any]` are type-erased values which allow for the storage of heterogeneous data structures.
 Typically these erased structures are difficult to work with and are often seen with code that utilises `JSONSerialization` or Cocoa API's such as Bundle and UserDefaults. 
-Eumorphic aims to ease the burden of use by providing a light sugar over these erased types.
+AnyValue aims to ease the burden of use by providing a light sugar over these erased types.
 
 ---
 
 ## Example
 
 ```swift
-import Eumorphic
+import AnyValue
 
 var dictionary: [String: Any] = [
     "string": "hello world",

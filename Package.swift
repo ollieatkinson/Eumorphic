@@ -3,13 +3,13 @@
 import PackageDescription
 
 let package = Package(
-    name: "Eumorphic",
+    name: "AnyValue",
     platforms: [.macOS(.v10_15), .iOS(.v13)],
     products: [
-        .library(name: "Eumorphic", targets: ["Eumorphic"]),
+        .library(name: "AnyValue", targets: ["AnyValue"]),
     ],
     targets: [
-        .target(name: "Eumorphic", dependencies: []),
-        .testTarget(name: "EumorphicTests", dependencies: ["Eumorphic"])
+        .target(name: "AnyValue", dependencies: []),
+        .testTarget(name: "AnyValueTests", dependencies: ["AnyValue"])
     ]
 )

@@ -6,11 +6,11 @@ import Foundation
 
 prefix operator ^
 
-extension Eumorphic {
-    public typealias Path = EumorphicPath
+extension HeterogeneousContainerProtocol {
+    public typealias Path = AnyPath
 }
 
-public struct EumorphicPath: Collection {
+public struct AnyPath: Collection {
     
     public enum Key {
         case int(Int), string(String)
@@ -40,7 +40,7 @@ public struct EumorphicPath: Collection {
     }
 }
 
-extension EumorphicPath: ExpressibleByArrayLiteral {
+extension AnyPath: ExpressibleByArrayLiteral {
     
     public init(arrayLiteral elements: Key...) {
         self.init(elements)
@@ -51,7 +51,7 @@ extension EumorphicPath: ExpressibleByArrayLiteral {
     }
 }
 
-extension EumorphicPath {
+extension AnyPath {
     
     public var startIndex: Index { base.startIndex }
     public var endIndex: Index { base.endIndex }
@@ -68,44 +68,44 @@ extension EumorphicPath {
     public func distance(from start: Base.Index, to end: Base.Index) -> Int {
         base.distance(from: start, to: end)
     }
-    public subscript(position: Base.Index) -> (head: Key, tail: EumorphicPath) {
-        return (base[position], EumorphicPath(base.suffix(from: index(after: position))))
+    public subscript(position: Base.Index) -> (head: Key, tail: AnyPath) {
+        return (base[position], AnyPath(base.suffix(from: index(after: position))))
     }
 }
 
-extension EumorphicPath {
+extension AnyPath {
     
-    public func appending(_ other: EumorphicPath.Key) -> EumorphicPath {
-        EumorphicPath([crumb, AnyRandomAccessCollection([other])].flatMap{ $0 })
+    public func appending(_ other: AnyPath.Key) -> AnyPath {
+        AnyPath([crumb, AnyRandomAccessCollection([other])].flatMap{ $0 })
     }
     
-    public func appending(_ path: EumorphicPath) -> EumorphicPath {
-        EumorphicPath([crumb, path.crumb].flatMap{ $0 })
+    public func appending(_ path: AnyPath) -> AnyPath {
+        AnyPath([crumb, path.crumb].flatMap{ $0 })
     }
 }
 
-extension EumorphicPath {
+extension AnyPath {
     public var isNotEmpty: Bool { !isEmpty }
     public var crumb: AnyRandomAccessCollection<Key> { base }
 }
 
-extension EumorphicPath: BidirectionalCollection {
+extension AnyPath: BidirectionalCollection {
     
     public func index(before i: Base.Index) -> Base.Index {
         base.index(before: i)
     }
 }
 
-extension EumorphicPath: RandomAccessCollection {}
-extension EumorphicPath: LazySequenceProtocol {}
-extension EumorphicPath: LazyCollectionProtocol {}
-extension EumorphicPath: Equatable {
+extension AnyPath: RandomAccessCollection {}
+extension AnyPath: LazySequenceProtocol {}
+extension AnyPath: LazyCollectionProtocol {}
+extension AnyPath: Equatable {
     
-    public static func == (lhs: EumorphicPath, rhs: EumorphicPath) -> Bool {
+    public static func == (lhs: AnyPath, rhs: AnyPath) -> Bool {
         lhs.base.elementsEqual(rhs.base)
     }
 }
-extension EumorphicPath: Hashable {
+extension AnyPath: Hashable {
     
     public func hash(into hasher: inout Hasher) {
         hasher.combine(count)
@@ -115,7 +115,7 @@ extension EumorphicPath: Hashable {
     }
 }
 
-extension EumorphicPath: Codable {
+extension AnyPath: Codable {
     
     public init(from decoder: Decoder) throws {
         let string = try String(from: decoder)
@@ -127,18 +127,18 @@ extension EumorphicPath: Codable {
     }
 }
 
-extension EumorphicPath.Key {
+extension AnyPath.Key {
     public static var first: Self { ^(0) }
     public static var last: Self { ^(-1) }
 }
 
-extension EumorphicPath.Key {
+extension AnyPath.Key {
     static func string(_ string: Substring) -> Self {
         .string(string.string)
     }
 }
 
-extension EumorphicPath.Key: CodingKey, ExpressibleByStringLiteral, ExpressibleByIntegerLiteral {
+extension AnyPath.Key: CodingKey, ExpressibleByStringLiteral, ExpressibleByIntegerLiteral {
     
     public init(stringLiteral value: String) {
         self = .string(value)
@@ -172,7 +172,7 @@ extension EumorphicPath.Key: CodingKey, ExpressibleByStringLiteral, ExpressibleB
     
 }
 
-extension EumorphicPath.Key: Hashable {
+extension AnyPath.Key: Hashable {
     
     public func hash(into hasher: inout Hasher) {
         switch self {
@@ -181,7 +181,7 @@ extension EumorphicPath.Key: Hashable {
         }
     }
     
-    public static func == (lhs: EumorphicPath.Key, rhs: EumorphicPath.Key) -> Bool {
+    public static func == (lhs: AnyPath.Key, rhs: AnyPath.Key) -> Bool {
         switch (lhs, rhs) {
         case let (.int(i), .int(j)): return i == j
         case let (.string(i), .string(j)): return i == j
@@ -191,10 +191,10 @@ extension EumorphicPath.Key: Hashable {
     
 }
 
-public prefix func ^ (r: Int) -> EumorphicPath.Key { .int(r) }
-public prefix func ^ <S>(r: S) -> EumorphicPath.Key where S: StringProtocol { .string(r.string) }
+public prefix func ^ (r: Int) -> AnyPath.Key { .int(r) }
+public prefix func ^ <S>(r: S) -> AnyPath.Key where S: StringProtocol { .string(r.string) }
 
-extension EumorphicPath.Key: CustomStringConvertible {
+extension AnyPath.Key: CustomStringConvertible {
     
     public var description: String {
         switch self {
@@ -204,7 +204,7 @@ extension EumorphicPath.Key: CustomStringConvertible {
     }
 }
 
-extension EumorphicPath.Key {
+extension AnyPath.Key {
     
     public var isInt: Bool {
         switch self {
@@ -221,7 +221,7 @@ extension EumorphicPath.Key {
     }
 }
 
-extension EumorphicPath.Key {
+extension AnyPath.Key {
     
     public init(_ string: String) {
         self = .string(string)
@@ -232,7 +232,7 @@ extension EumorphicPath.Key {
     }
 }
 
-extension EumorphicPath.Key: Codable {
+extension AnyPath.Key: Codable {
     
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
@@ -265,20 +265,20 @@ extension StringProtocol {
     fileprivate var string: String { String(self) }
 }
 
-extension EumorphicPath: ExpressibleByStringLiteral {
+extension AnyPath: ExpressibleByStringLiteral {
     
     public init(stringLiteral value: String) {
         self.init(value)!
     }
 }
 
-extension EumorphicPath: LosslessStringConvertible {
+extension AnyPath: LosslessStringConvertible {
     
     public static let pattern = try! NSRegularExpression(pattern: #"\.?((?<name>[\w]+)|\[(?<idx>[\d]+)\])"#)
     
     public init?(_ description: String) {
         do {
-            self = try Self(EumorphicPath.pattern.matches(in: description, range: NSRange(description.startIndex..<description.endIndex, in: description)).map { match in
+            self = try Self(AnyPath.pattern.matches(in: description, range: NSRange(description.startIndex..<description.endIndex, in: description)).map { match in
                 
                 let range = (
                     name: match.range(withName: "name"),

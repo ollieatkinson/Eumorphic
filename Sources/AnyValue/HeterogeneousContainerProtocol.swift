@@ -4,17 +4,17 @@
 
 import Foundation
 
-public protocol Eumorphic {
+public protocol HeterogeneousContainerProtocol {
     func get(_ path: Path) throws -> Any
     mutating func set(_ value: Any, at path: Path) throws
 }
 
 public enum GetError: Error {
-    case pathDoesNotExist(EumorphicPath, description: String)
+    case pathDoesNotExist(AnyPath, description: String)
     case other(Error)
 }
 
-extension Eumorphic {
+extension HeterogeneousContainerProtocol {
     
     public subscript() -> Any { self }
     public subscript<T>(type: T.Type = T.self) -> T? { self as? T }
@@ -65,15 +65,15 @@ extension Eumorphic {
     }
 }
 
-extension Dictionary: Eumorphic where Key == String, Value == Any {
+extension Dictionary: HeterogeneousContainerProtocol where Key == String, Value == Any {
     
-    public func get(_ path: EumorphicPath) throws -> Value {
+    public func get(_ path: AnyPath) throws -> Value {
         guard let (head, remaining) = path.first else { return self }
         guard let value = self[head.stringValue] else { throw GetError.pathDoesNotExist(path, description: "\(path) → Key \(head.stringValue) does not exist at \(self)") }
         return try _get(remaining, from: value)
     }
     
-    public mutating func set(_ value: Any, at path: EumorphicPath) throws {
+    public mutating func set(_ value: Any, at path: AnyPath) throws {
         guard let (head, remaining) = path.first else { return }
         switch (head.stringValue, remaining) {
         case nil: return
@@ -83,16 +83,16 @@ extension Dictionary: Eumorphic where Key == String, Value == Any {
     }
 }
 
-extension Array: Eumorphic where Element == Any {
+extension Array: HeterogeneousContainerProtocol where Element == Any {
     
-    public func get(_ path: EumorphicPath) throws -> Element {
+    public func get(_ path: AnyPath) throws -> Element {
         guard let (head, remaining) = path.first else { return self }
         guard let idx = head.intValue.map(bidirectionalIndex) else { throw GetError.pathDoesNotExist(path, description: "\(path) → Path indexing into array \(self) must be an Int - got: \(head.stringValue)") }
         guard indices.contains(idx) else { throw GetError.other("\(path) → Array index '\(idx)' out of bounds".error()) }
         return try _get(remaining, from: self[idx])
     }
     
-    public mutating func set(_ value: Element, at path: EumorphicPath) throws {
+    public mutating func set(_ value: Element, at path: AnyPath) throws {
         guard let (head, remaining) = path.first else { return }
         guard let idx = head.intValue.map(bidirectionalIndex) else { return }
         padded(to: idx, with: Optional<Any>.none as Any)
@@ -121,15 +121,15 @@ extension RangeReplaceableCollection where Self: BidirectionalCollection {
 // MARK :- get/set
 
 @_spi(Eumorphic)
-public func get<T>(_ path: EumorphicPath, from any: Any, as _: T.Type = T.self) throws -> T? {
+public func get<T>(_ path: AnyPath, from any: Any, as _: T.Type = T.self) throws -> T? {
     let any: Any = try _get(path, from: any)
     return try (any as? T).or(throw: GetError.other("\(type(of: any)) is not \(T.self)".error()))
 }
 
 @_spi(Eumorphic)
-public func _get(_ path: EumorphicPath, from any: Any) throws -> Any {
+public func _get(_ path: AnyPath, from any: Any) throws -> Any {
     switch any {
-    case let eumorphic as Eumorphic: return try eumorphic.get(path)
+    case let eumorphic as HeterogeneousContainerProtocol: return try eumorphic.get(path)
     case let array as [Any]: return try array.get(path)
     case let dictionary as [String: Any]: return try dictionary.get(path)
     case let fragment where path.isEmpty: return fragment as Any
@@ -138,12 +138,12 @@ public func _get(_ path: EumorphicPath, from any: Any) throws -> Any {
 }
 
 @_spi(Eumorphic)
-public func set<T>(_ value: T, at path: EumorphicPath, on any: Any) throws -> Any {
+public func set<T>(_ value: T, at path: AnyPath, on any: Any) throws -> Any {
     try _set(value, at: path, on: any)
 }
 
 @_spi(Eumorphic)
-public func _set(_ value: Any, at path: EumorphicPath, on any: Any) throws -> Any {
+public func _set(_ value: Any, at path: AnyPath, on any: Any) throws -> Any {
     guard let (crumb, _) = path.first else { return flattenOptionality(value) }
     switch crumb {
     case .int:

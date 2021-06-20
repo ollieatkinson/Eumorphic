@@ -4,41 +4,24 @@
 
 import Combine
 
-public struct AnyValue: Eumorphic {
+public struct AnyValue: HeterogeneousContainerProtocol {
     
     public static var empty: AnyValue = .null
     public static var null: AnyValue = .init(nil)
     
-    var wrapped: Any {
-        didSet { subject.send(wrapped) }
-    }
+    public private(set) var any: Any
     
     public init(_ value: Any? = nil) {
-        wrapped = value.flattened as Any
+        any = value.flattened as Any
     }
     
-    public func get(_ path: EumorphicPath) throws -> Any {
-        try _get(path, from: wrapped)
+    public func get(_ path: Path) throws -> Any {
+        try _get(path, from: any)
     }
     
-    public mutating func set(_ value: Any, at path: EumorphicPath) throws {
-        guard path.isNotEmpty else { return (wrapped = value) }
-        wrapped = try _set(value, at: path, on: wrapped)
-    }
-    
-    public var subject = PassthroughSubject<Any, Never>()
-}
-
-extension AnyValue {
-    
-    public func subscribe(to first: EumorphicPath.Key, _ rest: EumorphicPath.Key...) -> AnyPublisher<Result<Any, Error>, Never> {
-        subscribe(to: Path([first] + rest))
-    }
-    
-    public func subscribe(to path: EumorphicPath) -> AnyPublisher<Result<Any, Error>, Never> {
-        subject.merge(with: Just(wrapped)).map { wrapped in
-            return Result { try _get(path, from: wrapped) }
-        }.eraseToAnyPublisher()
+    public mutating func set(_ value: Any, at path: Path) throws {
+        guard path.isNotEmpty else { return (any = value) }
+        any = try _set(value, at: path, on: any)
     }
 }
 
@@ -133,7 +116,7 @@ extension AnyValue: Codable {
                 case let fragment: return fragment
                 }
             }
-            encoder.value = try ƒ(any())
+            encoder.value = try ƒ(any)
         default: throw """
             AnyValue can currently only be encoded with a
             StringAnyEncoderProtocol; got: \(encoder)
@@ -145,15 +128,10 @@ extension AnyValue: Codable {
 extension AnyValue {
 
     public func dictionary(_ function: String = #function, _ file: String = #file, _ line: Int = #line) throws -> [String: Any] {
-        try (wrapped as? [String: Any]).or(throw: "Expected [String: Any] but got \(type(of: wrapped))".error(function, file, line))
+        try (any as? [String: Any]).or(throw: "Expected [String: Any] but got \(type(of: any))".error(function, file, line))
     }
     
     public func array(_ function: String = #function, _ file: String = #file, _ line: Int = #line) throws -> [Any] {
-        try (wrapped as? [Any]).or(throw: "Expected [Any] but got \(type(of: wrapped))".error(function, file, line))
+        try (any as? [Any]).or(throw: "Expected [Any] but got \(type(of: any))".error(function, file, line))
     }
-    
-    public func any() -> Any {
-        wrapped
-    }
-    
 }
