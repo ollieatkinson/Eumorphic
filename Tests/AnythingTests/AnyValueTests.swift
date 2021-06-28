@@ -1,7 +1,7 @@
 import XCTest
 import Combine
 
-@testable import AnyValue
+@testable import Anything
 
 final class EumorphicTests: XCTestCase {
     

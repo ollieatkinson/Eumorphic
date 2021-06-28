@@ -3,13 +3,13 @@
 import PackageDescription
 
 let package = Package(
-    name: "AnyValue",
+    name: "Anything",
     platforms: [.macOS(.v10_15), .iOS(.v13)],
     products: [
-        .library(name: "AnyValue", targets: ["AnyValue"]),
+        .library(name: "Anything", targets: ["Anything"]),
     ],
     targets: [
-        .target(name: "AnyValue", dependencies: []),
-        .testTarget(name: "AnyValueTests", dependencies: ["AnyValue"])
+        .target(name: "Anything", dependencies: []),
+        .testTarget(name: "AnythingTests", dependencies: ["Anything"])
     ]
 )
